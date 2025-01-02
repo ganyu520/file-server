@@ -30,7 +30,7 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 		defer file.Close()
 
 		//创建本地文件接受文件流
-		newFile, err := os.Create("C:/Users/Administrator/GolandProjects/file-server/tmp/" + head.Filename)
+		newFile, err := os.Create("file-server/tmp/" + head.Filename)
 		if err != nil {
 			fmt.Println("Fail to create file,err:%s", err.Error())
 			return
