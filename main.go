@@ -1,9 +1,10 @@
 package main
 
 import (
-	"file-server/handler"
 	"fmt"
 	"net/http"
+
+	"github.com/ganyu520/file-server/handler"
 )
 
 func main() {
