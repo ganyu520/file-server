@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
@@ -29,7 +30,7 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 		//接受文件流及存储到本地目录
 		file, head, err := r.FormFile("file")
 		if err != nil {
-			fmt.Println("Fail to get data,err:%s", err.Error())
+			fmt.Printf("Fail to get data,err:%s", err.Error())
 			return
 		}
 		defer file.Close()
@@ -79,5 +80,28 @@ func GetFileMetaHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	w.Write(data)
+}
+
+func DownloadHandler(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	fsha1 := r.Form.Get("filehash")
+	fm := meta.GetFileMeta(fsha1)
+
+	f, err := os.Open(fm.Location)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer f.Close()
+
+	//读取文件
+	data, err := ioutil.ReadAll(f)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/octect-stream")
+	w.Header().Set("content-disposition", "attachment;filename=\""+fm.FileName+"\"")
 	w.Write(data)
 }
