@@ -5,6 +5,10 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"time"
+
+	"github.com/ganyu520/file-server/meta"
+	"github.com/ganyu520/file-server/util"
 )
 
 /*
@@ -28,19 +32,28 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		defer file.Close()
-
+		fileMeta := meta.FileMeta{
+			FileName: head.Filename,
+			Location: "/root/autodl-tmp/file-server/tmp/" + head.Filename,
+			UploadAt: time.Now().Format("2006-01-02 15:04:05"),
+		}
 		//创建本地文件接受文件流
-		newFile, err := os.Create("/root/autodl-tmp/file-server/tmp" + head.Filename)
+		newFile, err := os.Create(fileMeta.Location)
 		if err != nil {
-			fmt.Println("Fail to create file,err:%s", err.Error())
+			fmt.Printf("Fail to create file,err:%s", err.Error())
 			return
 		}
 		defer newFile.Close()
 		//3、拷贝文件
-		_, err = io.Copy(newFile, file)
+		fileMeta.FileSize, err = io.Copy(newFile, file)
 		if err != nil {
-			fmt.Println("Fail to copy file,err:%s", err.Error())
+			fmt.Printf("Fail to copy file,err:%s", err.Error())
+			return
 		}
+
+		newFile.Seek(0, 0)
+		fileMeta.FileSha1 = util.FileSha1(newFile)
+		meta.UpdateFileMeta(fileMeta)
 		//4、上传成功则重定向
 		http.Redirect(w, r, "/file/upload/suc", http.StatusFound)
 	}
